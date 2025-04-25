@@ -1,0 +1,76 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "provenance": [],
+      "authorship_tag": "ABX9TyPivja9nkbLWAEeJcCaIBw+",
+      "include_colab_link": true
+    },
+    "kernelspec": {
+      "name": "python3",
+      "display_name": "Python 3"
+    },
+    "language_info": {
+      "name": "python"
+    }
+  },
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "view-in-github",
+        "colab_type": "text"
+      },
+      "source": [
+        "<a href=\"https://colab.research.google.com/github/iamDon/Python-Cheat-Sheet/blob/master/Main.py%20for%20Raspberry%20Pico\" target=\"_parent\"><img src=\"https://colab.research.google.com/assets/colab-badge.svg\" alt=\"Open In Colab\"/></a>"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "ORtHhXzmiYI0"
+      },
+      "outputs": [],
+      "source": [
+        "import sys\n",
+        "import time\n",
+        "from machine import Pin, ADC\n",
+        "import select\n",
+        "\n",
+        "# Define LM35 sensor pin (adjust as needed)\n",
+        "sensor_pin = ADC(Pin(26))  # Example: using GP26\n",
+        "\n",
+        "# Create a Poll object\n",
+        "poller = select.poll()\n",
+        "poller.register(sys.stdin, select.POLLIN)\n",
+        "\n",
+        "def read_temperature():\n",
+        "    analog_value = sensor_pin.read_u16()\n",
+        "    voltage = analog_value * (3.3 / 65535)\n",
+        "    celsius = (voltage - 0.5) * 10\n",
+        "    return celsius\n",
+        "\n",
+        "while True:\n",
+        "    try:\n",
+        "        temperature = read_temperature()\n",
+        "        print(f\"{temperature:.2f}\")\n",
+        "        sys.stdout.flush()\n",
+        "        time.sleep(3)  # Change the delay to 3 seconds\n",
+        "\n",
+        "        # (Optional) Check for commands from the Mac (less important for this change)\n",
+        "        events = poller.poll(0)  # Non-blocking poll\n",
+        "        for fd, event in events:\n",
+        "            if event & select.POLLIN:\n",
+        "                command = sys.stdin.readline().strip()\n",
+        "                if command == \"request_data\":\n",
+        "                    print(f\"{temperature:.2f}\")\n",
+        "                    sys.stdout.flush()\n",
+        "\n",
+        "    except Exception as e:\n",
+        "        sys.stderr.write(f\"Pico W Error: {e}\\n\")"
+      ]
+    }
+  ]
+}
